@@ -13,23 +13,25 @@ services:
     ports:
       - "5432:5432"
 
-  # web:
-  #   build: .
-  #   container_name: magnum-opus-django
-  #   command: python manage.py runserver 0.0.0.0:8000
-  #   volumes:
-  #     - .:/app
-  #   ports:
-  #     - "8000:8000"
-  #   environment:
-  #     DJANGO_SETTINGS_MODULE: server.settings
-  #     DATABASE_URL: postgres://${DB_USER_NM}:${DB_USER_PW}@db:${DB_PORT}/${DB_NAME}
-  #     # If using Django Channels, uncomment and adjust the command:
-  #     # CMD: daphne your_project_name.asgi:application --bind 0.0.0.0 --port 8000
-  #   env_file:
-  #      - ./.env
-  #   depends_on:
-  #     - db
+  django:
+    build: .
+    container_name: magnum-opus-django
+    command: ./entrypoint.sh
+    volumes:
+      - .:/app
+      - ./media:/app/media # Mount the media folder
+      - ./static:/app/static # Mount the static folder (for collected static files)
+    ports:
+      - "8000:8000"
+    environment:
+      DJANGO_SETTINGS_MODULE: server.settings
+      DATABASE_URL: postgres://${DB_USER_NM}:${DB_USER_PW}@db:${DB_PORT}/${DB_NAME}
+      # If using Django Channels, uncomment and adjust the command:
+      # CMD: daphne your_project_name.asgi:application --bind 0.0.0.0 --port 8000
+    env_file:
+      - ./.env
+    depends_on:
+      - db
 
 volumes:
   pg_data:
