@@ -9,20 +9,6 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'username']
 
 
-class AuctionSerializer(serializers.ModelSerializer):
-    seller = UserSerializer(read_only=True)
-    current_bid = serializers.DecimalField(
-        max_digits=10, decimal_places=2, read_only=True)
-    bid_count = serializers.IntegerField(read_only=True)
-
-    class Meta:
-        model = Auction
-        fields = ['id', 'seller', 'title', 'description', 'image_url', 'starting_price',
-                  'current_bid', 'bid_count', 'start_time', 'end_time', 'status', 'created_at', 'updated_at']
-        read_only_fields = ['id', 'seller', 'current_bid',
-                            'bid_count', 'start_time', 'created_at', 'updated_at']
-
-
 class BidSerializer(serializers.ModelSerializer):
     bidder = UserSerializer(read_only=True)
     auction = serializers.PrimaryKeyRelatedField(
@@ -62,3 +48,70 @@ class CommentSerializer(serializers.ModelSerializer):
                   'created_at', 'updated_at']
         read_only_fields = ['id', 'user', 'created_at',
                             'updated_at']
+
+
+class AuctionSerializer(serializers.ModelSerializer):
+    seller = UserSerializer(read_only=True)
+    current_bid = serializers.DecimalField(
+        max_digits=10, decimal_places=2, read_only=True)
+
+    # Add method fields
+    bid_count = serializers.SerializerMethodField(
+        method_name='get_bid_count')
+    like_count = serializers.SerializerMethodField(
+        method_name='get_like_count')
+    comment_count = serializers.SerializerMethodField(
+        method_name='get_comment_count')
+
+    class Meta:
+        model = Auction
+        fields = ['id', 'seller', 'title', 'description', 'image_url', 'starting_price', 'current_bid',
+                  'start_time', 'end_time', 'status', 'created_at', 'updated_at', 'bid_count', 'like_count', 'comment_count']
+        read_only_fields = ['id', 'seller', 'current_bid', 'start_time',
+                            'created_at', 'updated_at', 'bid_count', 'like_count', 'comment_count']
+
+    def get_bid_count(self, obj):
+        return obj.bid_set.count()
+
+    def get_like_count(self, obj):
+        return obj.like_set.count()
+
+    def get_comment_count(self, obj):
+        return obj.comment_set.count()
+
+
+class AuctionDetailSerializer(serializers.ModelSerializer):
+    seller = UserSerializer(read_only=True)
+    current_bid = serializers.DecimalField(
+        max_digits=10, decimal_places=2, read_only=True)
+
+    # Add method fields
+    bid_count = serializers.SerializerMethodField(
+        method_name='get_bid_count')
+    like_count = serializers.SerializerMethodField(
+        method_name='get_like_count')
+    comment_count = serializers.SerializerMethodField(
+        method_name='get_comment_count')
+
+    # Add nested serializers for related models
+    bids = serializers.SerializerMethodField(method_name='get_bids')
+    comments = CommentSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Auction
+        fields = ['id', 'seller', 'title', 'description', 'image_url', 'starting_price', 'current_bid', 'start_time',
+                  'end_time', 'status', 'created_at', 'updated_at', 'bid_count', 'like_count', 'comment_count', 'bids', 'comments']
+        read_only_fields = ['id', 'seller', 'current_bid', 'bid_count',
+                            'like_count', 'comment_count', 'start_time', 'created_at', 'updated_at']
+
+    def get_bids(self, obj):
+        return obj.bid_set.values_list('bid_amount', flat=True).order_by('-bid_amount')
+
+    def get_bid_count(self, obj):
+        return obj.bid_set.count()
+
+    def get_like_count(self, obj):
+        return obj.like_set.count()
+
+    def get_comment_count(self, obj):
+        return obj.comment_set.count()

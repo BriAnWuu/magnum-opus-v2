@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Auction
-from .serializers import AuctionSerializer
+from .serializers import AuctionSerializer, AuctionDetailSerializer
 from django.shortcuts import get_object_or_404
 
 
@@ -19,7 +19,7 @@ def auction_list(request):
 @permission_classes([AllowAny])
 def auction_detail(request, pk):
     auction = get_object_or_404(Auction, pk=pk)
-    serializer = AuctionSerializer(auction)
+    serializer = AuctionDetailSerializer(auction)
     return Response(serializer.data)
 
 
