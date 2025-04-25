@@ -11,7 +11,6 @@ class Auction(models.Model):
     starting_price = models.DecimalField(max_digits=10, decimal_places=2)
     current_bid = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True)
-    bid_count = models.IntegerField(default=0)
     start_time = models.DateTimeField(auto_now_add=True)
     end_time = models.DateTimeField()
     status = models.CharField(
