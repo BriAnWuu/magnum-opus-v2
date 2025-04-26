@@ -10,7 +10,8 @@ class Auction(models.Model):
     image_url = models.CharField(max_length=255, blank=True, null=True)
     starting_price = models.DecimalField(max_digits=10, decimal_places=2)
     current_bid = models.DecimalField(
-        max_digits=10, decimal_places=2, blank=True, null=True)
+        max_digits=10, decimal_places=2, blank=True, null=True
+    )
     start_time = models.DateTimeField(auto_now_add=True)
     end_time = models.DateTimeField()
     status = models.CharField(
@@ -59,7 +60,11 @@ class Like(models.Model):
 
 class Comment(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    auction = models.ForeignKey(Auction, on_delete=models.CASCADE)
+    auction = models.ForeignKey(
+        Auction,
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     comment_text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
