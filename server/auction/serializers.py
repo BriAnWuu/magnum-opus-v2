@@ -121,7 +121,6 @@ class AuctionDetailSerializer(serializers.ModelSerializer):
     # Add nested serializers for related models
     bids = serializers.SerializerMethodField()
     comments = CommentSerializer(many=True, read_only=True)
-    # comments = serializers.SerializerMethodField()
 
     class Meta:
         model = Auction
@@ -132,11 +131,6 @@ class AuctionDetailSerializer(serializers.ModelSerializer):
 
     def get_bids(self, obj):
         return obj.bid_set.values_list('bid_amount', flat=True).order_by('-bid_amount')
-
-    # def get_comments(self, obj):
-    #     comments = Comment.objects.filter(auction=obj).order_by(
-    #         '-created_at')
-    #     return CommentSerializer(comments, many=True).data
 
     def get_bid_count(self, obj):
         return obj.bid_set.count()
