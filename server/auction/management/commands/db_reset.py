@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from django.core.management import call_command
 from django.conf import settings
 from django.contrib.auth.models import User
-from auction.models import Auction
+from auction.models import Auction, Bid, Like, Comment
 from django.utils import timezone
 
 
@@ -68,12 +68,37 @@ class Command(BaseCommand):
             users.append(user)
 
         # Create 3 auctions, all owned by user1
+        auctions = []
         for i in range(1, 4):
-            Auction.objects.create(
+            auction = Auction.objects.create(
                 seller=users[0],  # User1 owns all auctions
                 title=f'Auction {i}',
                 description=f'Description for Auction {i}',
                 image_url='https://fakestoreapi.com/img/81fPKd-2AYL._AC_SL1500_.jpg',
                 starting_price=10.00 * i,
-                end_time=timezone.now() + timezone.timedelta(days=10 - i),  # Varying end times
+                end_time=timezone.now() + timezone.timedelta(days=10 - i)
+            )
+            auctions.append(auction)
+
+        # Seed bids
+        for i, user in enumerate(users[1:]):
+            Bid.objects.create(
+                bidder=user,
+                auction=auctions[1],
+                bid_amount=auctions[1].starting_price + 10.00 * (i + 1)
+            )
+
+        # Seed likes (users 2-5 like the first auction)
+        for user in users[1:]:  # Users 2, 3, 4, 5
+            Like.objects.create(
+                user=user,
+                auction=auctions[0],  # First auction
+            )
+
+        # Seed comments (users 3-5 comment on the second auction)
+        for user in users[2:]:  # Users 3, 4, 5
+            Comment.objects.create(
+                user=user,
+                auction=auctions[1],  # Second auction
+                comment_text=f'Nice pic!! by {user.username}',
             )
