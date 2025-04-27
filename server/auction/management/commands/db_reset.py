@@ -85,7 +85,7 @@ class Command(BaseCommand):
             Bid.objects.create(
                 bidder=user,
                 auction=auctions[1],
-                bid_amount=auctions[1].starting_price + 10.00 * (i + 1)
+                amount=auctions[1].starting_price + 10.00 * (i + 1)
             )
 
         # Seed likes (users 2-5 like the first auction)

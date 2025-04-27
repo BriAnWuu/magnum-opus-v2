@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 import uuid
+from django.utils import timezone
 
 
 class Auction(models.Model):
@@ -12,37 +13,59 @@ class Auction(models.Model):
     current_bid = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True
     )
-    start_time = models.DateTimeField(auto_now_add=True)
     end_time = models.DateTimeField()
-    status = models.CharField(
-        max_length=20,
-        default='active',
-        choices=[
-            ('active', 'Active'),
-            ('ended', 'Ended'),
-            ('cancelled', 'Cancelled'),
-        ]
-    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return self.title
+
+    def is_valid_bid(self, amount, user):
+        """
+        Checks if a given bid amount is valid for a user
+        """
+        if self.seller == user:
+            return False
+        if self.current_bid is None:
+            return amount >= self.starting_price
+
+        latest_bid_obj = self.get_highest_bid()
+        if latest_bid_obj:
+            if latest_bid_obj.bidder == user:
+                return False
+            return amount > latest_bid_obj.amount
+        return amount > self.current_bid
+
+    def get_highest_bid(self):
+        """
+        Returns the highest bid for this auction.
+        """
+        if self.bid_set.exists():
+            return self.bid_set.order_by('-amount').first()
+        return None
+
+    def can_cancel(self):
+        """
+        Determines if the auction can be canceled.
+        Auctions can be canceled if they have no bids and the end time has not passed.
+        """
+        return self.bid_set.count() == 0 and self.end_time > timezone.now()
 
 
 class Bid(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     auction = models.ForeignKey(Auction, on_delete=models.CASCADE)
     bidder = models.ForeignKey(User, on_delete=models.CASCADE)
-    bid_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('auction', 'bidder', 'bid_amount')
+        unique_together = ('auction', 'bidder', 'amount')
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.bidder.username} bid ${self.bid_amount} on {self.auction.title}"
+        return f"{self.bidder.username} bid ${self.amount} on {self.auction.title}"
 
 
 class Like(models.Model):
@@ -69,6 +92,14 @@ class Comment(models.Model):
     comment_text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_deleted = models.BooleanField(default=False)  # soft delete
 
     def __str__(self):
         return f"{self.user.username} commented on {self.auction.title}"
+
+    def delete(self, using=None, keep_parents=False):
+        """
+        Soft delete the comment by setting is_deleted to True.
+        """
+        self.is_deleted = True
+        self.save()
