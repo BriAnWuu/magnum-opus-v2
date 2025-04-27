@@ -1,5 +1,6 @@
+from .serializers import UserSerializer
+from rest_framework.authtoken.models import Token
 from django.test import TestCase
-
 from rest_framework.test import APITestCase
 from rest_framework import status
 from django.urls import reverse
@@ -76,9 +77,10 @@ class UserRegistrationTests(APITestCase):
         """
         Test registration with a duplicate username.
         """
+        # Create a user first
         User.objects.create_user(
-            # Create a user first
-            username="existinguser", email="existing@example.com", password="password")
+            username="existinguser", email="existing@example.com", password="password"
+        )
         data = {
             "username": "existinguser",
             "email": "newuser@example.com",
@@ -94,9 +96,10 @@ class UserRegistrationTests(APITestCase):
         """
         Test registration with a duplicate email.
         """
+        # Create a user first
         User.objects.create_user(
-            # Create a user first
-            username="existinguser", email="existing@example.com", password="password")
+            username="existinguser", email="existing@example.com", password="password"
+        )
         data = {
             "username": "newuser",
             "email": "existing@example.com",
@@ -107,3 +110,38 @@ class UserRegistrationTests(APITestCase):
         response = self.client.post(self.registration_url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("email", response.data)
+
+
+class UserInfoTests(APITestCase):
+    def setUp(self):
+        # Create a test user
+        self.user = User.objects.create_user(
+            username="testuser",
+            email="testuser@example.com",
+            password="testpassword",
+            first_name="Test",
+            last_name="User",
+        )
+        # Create a token for the test user
+        self.token = Token.objects.create(user=self.user)
+        # Set up default authentication
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token.key}')
+        # Get URL for the /api/user/me/ endpoint
+        self.user_me_url = reverse('user_info')
+
+    def test_get_user_info_authenticated(self):
+        """
+        Test getting user info with a valid token.
+        """
+        response = self.client.get(self.user_me_url)
+        expected_data = UserSerializer(self.user).data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, expected_data)
+
+    def test_get_user_info_unauthenticated(self):
+        """
+        Test getting user info without a token.
+        """
+        self.client.credentials()  # Clear the default authentication
+        response = self.client.get(self.user_me_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
