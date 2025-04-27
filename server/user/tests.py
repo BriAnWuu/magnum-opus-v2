@@ -1,6 +1,5 @@
 from .serializers import UserSerializer
 from rest_framework.authtoken.models import Token
-from django.test import TestCase
 from rest_framework.test import APITestCase
 from rest_framework import status
 from django.urls import reverse
@@ -110,6 +109,86 @@ class UserRegistrationTests(APITestCase):
         response = self.client.post(self.registration_url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("email", response.data)
+
+
+class UserLoginTests(APITestCase):
+    def setUp(self):
+        # Create a test user
+        self.user = User.objects.create_user(
+            username="testuser",
+            email="testuser@example.com",
+            password="testpassword",
+        )
+        self.login_url = reverse('login')
+
+    def test_login_success(self):
+        """
+        Test successful login with correct credentials.
+        """
+        data = {
+            "username": "testuser",
+            "password": "testpassword",
+        }
+        response = self.client.post(self.login_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("token", response.data)
+        self.assertTrue(Token.objects.filter(user=self.user).exists())
+
+    def test_login_failure_invalid_credentials(self):
+        """
+        Test login with incorrect password.
+        """
+        data = {
+            "username": "testuser",
+            "password": "wrongpassword",
+        }
+        response = self.client.post(self.login_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn("error", response.data)
+        self.assertEqual(response.data["error"], "Invalid credentials")
+
+    def test_login_failure_missing_username(self):
+        """
+        Test login with missing username.
+        """
+        data = {
+            "password": "testpassword",
+        }
+        response = self.client.post(self.login_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.data)
+        self.assertEqual(
+            response.data["error"],
+            "Please provide username and password"
+        )
+
+    def test_login_failure_missing_password(self):
+        """
+        Test login with missing password.
+        """
+        data = {
+            "username": "testuser",
+        }
+        response = self.client.post(self.login_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.data)
+        self.assertEqual(
+            response.data["error"],
+            "Please provide username and password"
+        )
+
+    def test_login_failure_invalid_username(self):
+        """
+        Test login with invalid username.
+        """
+        data = {
+            "username": "nonexistentuser",
+            "password": "testpassword",
+        }
+        response = self.client.post(self.login_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn("error", response.data)
+        self.assertEqual(response.data["error"], "Invalid credentials")
 
 
 class UserInfoTests(APITestCase):
