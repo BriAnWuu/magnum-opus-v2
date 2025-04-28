@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework import generics
@@ -17,13 +18,23 @@ class AuctionListView(generics.ListAPIView):
     serializer_class = AuctionListSerializer
     permission_classes = [AllowAny]
 
+    def get_queryset(self):
+        is_active = self.request.query_params.get('is_active', None)
+        if is_active is not None:
+            if is_active.lower() == 'true':
+                return Auction.objects.filter(is_active=True)
+            elif is_active.lower() == 'false':
+                return Auction.objects.filter(is_active=False)
+            else:
+                raise ValidationError('Invalid query parameter for is_active.')
+        return Auction.objects.all()
+
 
 class AuctionDetailView(generics.RetrieveAPIView):
     """
     Retrieves a single auction.
     """
-    queryset = Auction.objects.filter(
-        is_active=True)
+    queryset = Auction.objects.all()
     serializer_class = AuctionDetailSerializer
     permission_classes = [AllowAny]
     lookup_field = 'pk'

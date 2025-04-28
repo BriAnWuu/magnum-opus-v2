@@ -102,9 +102,6 @@ class AuctionListSerializer(serializers.ModelSerializer):
                             'created_at', 'updated_at', 'bid_count', 'like_count', 'comment_count']
 
     def get_highest_bid(self, obj):
-        """
-        Returns the amount of the highest bid.
-        """
         highest_bid = obj.get_highest_bid()
         if highest_bid:
             return highest_bid.amount
@@ -123,30 +120,28 @@ class AuctionListSerializer(serializers.ModelSerializer):
 class AuctionDetailSerializer(serializers.ModelSerializer):
     seller = UserSerializer(read_only=True)
 
-    # Add method fields
+    # Add fields
     bid_count = serializers.SerializerMethodField()
     like_count = serializers.SerializerMethodField()
     comment_count = serializers.SerializerMethodField()
     highest_bid = serializers.SerializerMethodField()
+    user_has_liked = serializers.SerializerMethodField()
 
-    # Add nested serializers for related models
+    # Add nested serializers
     bids = serializers.SerializerMethodField()
     comments = CommentSerializer(many=True, read_only=True)
 
     class Meta:
         model = Auction
-        fields = ['id', 'seller', 'title', 'description', 'image_url', 'starting_price', 'current_bid', 'highest_bid' 'start_time',
-                  'end_time', 'is_active', 'created_at', 'updated_at', 'bid_count', 'like_count', 'comment_count', 'bids', 'comments']
+        fields = ['id', 'seller', 'title', 'description', 'image_url', 'starting_price', 'current_bid', 'highest_bid' 'start_time', 'end_time',
+                  'is_active', 'created_at', 'updated_at', 'bid_count', 'like_count', 'comment_count', 'user_has_liked', 'bids', 'comments']
         read_only_fields = ['id', 'seller', 'current_bid', 'highest_bid', 'bid_count',
-                            'like_count', 'comment_count', 'start_time', 'created_at', 'updated_at']
+                            'like_count', 'comment_count', 'user_has_liked', 'start_time', 'created_at', 'updated_at']
 
     def get_bids(self, obj):
         return obj.bid_set.values_list('amount', flat=True).order_by('-amount')
 
     def get_highest_bid(self, obj):
-        """
-        Returns the amount of the highest bid.
-        """
         highest_bid = obj.get_highest_bid()
         if highest_bid:
             return highest_bid.amount
@@ -160,6 +155,12 @@ class AuctionDetailSerializer(serializers.ModelSerializer):
 
     def get_comment_count(self, obj):
         return obj.comments.count()
+
+    def get_user_has_liked(self, obj):
+        user = self.context['request'].user
+        if user.is_anonymous:
+            return False
+        return obj.like_set.filter(user=user).exists()
 
 
 class AuctionCreateSerializer(serializers.ModelSerializer):
