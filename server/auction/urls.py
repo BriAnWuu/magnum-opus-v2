@@ -1,8 +1,17 @@
 from django.urls import path
-from . import views
+from .views import AuctionListView, AuctionDetailView, place_bid, manage_comment, manage_like, cancel_auction, AuctionCreateView
 
 urlpatterns = [
-    path('', views.auction_list, name='auction_list'),
-    path('<int:pk>/', views.auction_detail, name='auction_detail'),
-    path('create/', views.create_auction, name='create_auction'),
+    path('', AuctionListView.as_view(), name='auction_list'),
+    path('create/', AuctionCreateView.as_view(), name='auction_create'),
+    path('<int:pk>/', AuctionDetailView.as_view(), name='auction_detail'),
+    path('<int:pk>/cancel/', cancel_auction, name='cancel_auction'),
+
+    path('<int:pk>/bid/', place_bid, name='place_bid'),
+
+    path('<int:pk>/comment/', manage_comment, name='manage_comment'),
+    path('<int:pk>/comment/<int:comment_id>/',
+         manage_comment, name='manage_comment'),
+
+    path('<int:pk>/like/', manage_like, name='manage_like'),
 ]

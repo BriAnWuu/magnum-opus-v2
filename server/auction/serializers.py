@@ -63,6 +63,13 @@ class LikeSerializer(serializers.ModelSerializer):
             )
         ]
 
+    def create(self, validated_data):
+        user = self.context['request'].user
+        auction = self.context['auction']
+        validated_data['user'] = user
+        validated_data['auction'] = auction
+        return Like.objects.create(**validated_data)
+
 
 class CommentSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
@@ -77,15 +84,8 @@ class CommentSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'user', 'created_at',
                             'updated_at', 'is_deleted']
 
-    def create(self, validated_data):
-        user = self.context['request'].user
-        auction = self.context['auction']
-        validated_data['user'] = user
-        validated_data['auction'] = auction
-        return Like.objects.create(**validated_data)
 
-
-class AuctionSerializer(serializers.ModelSerializer):
+class AuctionListSerializer(serializers.ModelSerializer):
     seller = UserSerializer(read_only=True)
 
     # Add method fields
@@ -96,9 +96,9 @@ class AuctionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Auction
-        fields = ['id', 'seller', 'title', 'description', 'image_url', 'starting_price', 'current_bid', 'highest_bid' 'start_time',
+        fields = ['id', 'seller', 'title', 'description', 'image_url', 'starting_price', 'current_bid', 'highest_bid',
                   'end_time', 'created_at', 'updated_at', 'is_active', 'bid_count', 'like_count', 'comment_count']
-        read_only_fields = ['id', 'seller', 'current_bid', 'highest_bid', 'start_time',
+        read_only_fields = ['id', 'seller', 'current_bid', 'highest_bid',
                             'created_at', 'updated_at', 'bid_count', 'like_count', 'comment_count']
 
     def get_highest_bid(self, obj):
@@ -160,3 +160,15 @@ class AuctionDetailSerializer(serializers.ModelSerializer):
 
     def get_comment_count(self, obj):
         return obj.comments.count()
+
+
+class AuctionCreateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for creating a new auction.
+    """
+
+    class Meta:
+        model = Auction
+        fields = ['id', 'title', 'description',
+                  'image_url', 'starting_price', 'end_time']
+        read_only_fields = ['id']
