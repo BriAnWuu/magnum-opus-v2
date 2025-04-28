@@ -91,29 +91,6 @@ def place_bid(request, pk):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def add_comment(request, pk):
-    """
-    Adds a comment to an auction.
-    """
-    auction = get_object_or_404(
-        Auction,
-        pk=pk
-    )
-    serializer = CommentSerializer(
-        data=request.data,
-        context={
-            'request': request,
-            'auction': auction
-        }
-    )
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 @api_view(['POST', 'PUT', 'DELETE'])
 @permission_classes([IsAuthenticated])
 def manage_comment(request, pk, comment_id=None):
