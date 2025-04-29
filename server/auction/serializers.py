@@ -88,7 +88,7 @@ class CommentSerializer(serializers.ModelSerializer):
 class AuctionListSerializer(serializers.ModelSerializer):
     seller = UserSerializer(read_only=True)
 
-    # Add method fields
+    # Add fields
     highest_bid = serializers.SerializerMethodField()
     bid_count = serializers.SerializerMethodField()
     like_count = serializers.SerializerMethodField()
@@ -133,10 +133,10 @@ class AuctionDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Auction
-        fields = ['id', 'seller', 'title', 'description', 'image_url', 'starting_price', 'current_bid', 'highest_bid' 'start_time', 'end_time',
+        fields = ['id', 'seller', 'title', 'description', 'image_url', 'starting_price', 'current_bid', 'highest_bid', 'end_time',
                   'is_active', 'created_at', 'updated_at', 'bid_count', 'like_count', 'comment_count', 'user_has_liked', 'bids', 'comments']
         read_only_fields = ['id', 'seller', 'current_bid', 'highest_bid', 'bid_count',
-                            'like_count', 'comment_count', 'user_has_liked', 'start_time', 'created_at', 'updated_at']
+                            'like_count', 'comment_count', 'user_has_liked', 'created_at', 'updated_at']
 
     def get_bids(self, obj):
         return obj.bid_set.values_list('amount', flat=True).order_by('-amount')
