@@ -2,7 +2,8 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.authtoken.models import Token
+from rest_framework.test import APITestCase, force_authenticate
 from .models import Auction, Bid, Like, Comment
 from .serializers import AuctionDetailSerializer
 
@@ -261,3 +262,168 @@ class AuctionDetailViewTests(APITestCase):
         Like.objects.create(user=self.user1, auction=self.auction1)
         user_has_liked = serializer.get_user_has_liked(self.auction1)
         self.assertTrue(user_has_liked)
+
+
+class AuctionCreateViewTests(APITestCase):
+    @classmethod
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='testuser', password='testpassword')
+        self.token = Token.objects.create(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+        self.url = reverse('auction_create')
+
+    def test_create_auction_success(self):
+        """
+        Test successful auction creation with valid data.
+        """
+        force_authenticate(self.client, user=self.user)
+
+        end_time = timezone.now() + timezone.timedelta(days=7)
+        data = {
+            'title': 'Test Auction',
+            'description': 'This is a test auction.',
+            'starting_price': 100.00,
+            'end_time': end_time.isoformat(),
+        }
+        response = self.client.post(
+            self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Auction.objects.count(), 1)
+        auction = Auction.objects.get(title='Test Auction')
+        self.assertEqual(auction.seller, self.user)
+        self.assertEqual(auction.description, 'This is a test auction.')
+        self.assertEqual(auction.starting_price, 100.00)
+        self.assertEqual(auction.end_time, end_time)
+        self.assertTrue(auction.is_active)
+
+    def test_create_auction_missing_title(self):
+        """
+        Test auction creation with missing title.
+        """
+        force_authenticate(self.client, user=self.user)
+
+        end_time = timezone.now() + timezone.timedelta(days=7)
+        data = {
+            'description': 'This is a test auction.',
+            'starting_price': 100.00,
+            'end_time': end_time.isoformat(),
+        }
+        response = self.client.post(
+            self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('title', response.data)
+
+    def test_create_auction_missing_description(self):
+        """
+        Test auction creation with missing description.
+        """
+        force_authenticate(self.client, user=self.user)  # Authenticate
+        end_time = timezone.now() + timezone.timedelta(days=7)
+        data = {
+            'title': 'Test Auction',
+            'starting_price': 100.00,
+            'end_time': end_time.isoformat(),
+        }
+        response = self.client.post(
+            self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn('description', response.data)
+
+    def test_create_auction_missing_starting_price(self):
+        """
+        Test auction creation with missing starting price.
+        """
+        force_authenticate(self.client, user=self.user)  # Authenticate
+        end_time = timezone.now() + timezone.timedelta(days=7)
+        data = {
+            'title': 'Test Auction',
+            'description': 'This is a test auction.',
+            'end_time': end_time.isoformat(),
+        }
+        response = self.client.post(
+            self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('starting_price', response.data)
+
+    def test_create_auction_missing_end_time(self):
+        """
+        Test auction creation with missing end time.
+        """
+        force_authenticate(self.client, user=self.user)  # Authenticate
+        data = {
+            'title': 'Test Auction',
+            'description': 'This is a test auction.',
+            'starting_price': 100.00,
+        }
+        response = self.client.post(
+            self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('end_time', response.data)
+
+    def test_create_auction_invalid_starting_price(self):
+        """
+        Test auction creation with an invalid starting price (e.g., negative value).
+        """
+        force_authenticate(self.client, user=self.user)
+        end_time = timezone.now() + timezone.timedelta(days=7)
+        data = {
+            'title': 'Test Auction',
+            'description': 'This is a test auction.',
+            'starting_price': -100.00,
+            'end_time': end_time.isoformat(),
+        }
+        response = self.client.post(
+            self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('starting_price', response.data)
+
+    def test_create_auction_invalid_starting_price_zero(self):
+        """
+        Test auction creation with an invalid starting price (e.g., negative value).
+        """
+        force_authenticate(self.client, user=self.user)
+        end_time = timezone.now() + timezone.timedelta(days=7)
+        data = {
+            'title': 'Test Auction',
+            'description': 'This is a test auction.',
+            'starting_price': 0.00,
+            'end_time': end_time.isoformat(),
+        }
+        response = self.client.post(
+            self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('starting_price', response.data)
+
+    def test_create_auction_invalid_end_time(self):
+        """
+        Test auction creation with an invalid end time.
+        """
+        force_authenticate(self.client, user=self.user)
+        end_time = timezone.now() - timezone.timedelta(days=1)
+        data = {
+            'title': 'Test Auction',
+            'description': 'This is a test auction.',
+            'starting_price': 100.00,
+            'end_time': end_time.isoformat(),
+        }
+        response = self.client.post(
+            self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('end_time', response.data)
+
+    def test_create_auction_unauthenticated(self):
+        """
+        Test auction creation without authentication.
+        """
+        self.client.credentials()  # Remove any existing authentication
+        end_time = timezone.now() + timezone.timedelta(days=7)
+        data = {
+            'title': 'Test Auction',
+            'description': 'This is a test auction.',
+            'starting_price': 100.00,
+            'end_time': end_time.isoformat(),
+        }
+        response = self.client.post(
+            self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

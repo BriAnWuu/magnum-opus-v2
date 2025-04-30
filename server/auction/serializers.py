@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.utils import timezone
 from rest_framework import serializers
 from .models import Auction, Bid, Like, Comment
 
@@ -167,9 +168,27 @@ class AuctionCreateSerializer(serializers.ModelSerializer):
     """
     Serializer for creating a new auction.
     """
+    end_time = serializers.DateTimeField()
 
     class Meta:
         model = Auction
-        fields = ['id', 'title', 'description',
-                  'image_url', 'starting_price', 'end_time']
-        read_only_fields = ['id']
+        fields = ['title', 'description', 'image_url',
+                  'starting_price', 'end_time', 'is_active']
+
+    def validate_end_time(self, value):
+        """
+        Validate that the end time is in the future.
+        """
+        if value <= timezone.now():
+            raise serializers.ValidationError(
+                "End time must be in the future.")
+        return value
+
+    def validate_starting_price(self, value):
+        """
+        Validate that the starting price is positive.
+        """
+        if value <= 0:
+            raise serializers.ValidationError(
+                "Starting price must be positive.")
+        return value
