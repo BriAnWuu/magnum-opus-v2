@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.utils import timezone
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from .models import Auction, Bid, Like, Comment
 
 
@@ -11,34 +12,48 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class BidSerializer(serializers.ModelSerializer):
-    bidder = UserSerializer(read_only=True)
-    auction = serializers.PrimaryKeyRelatedField(
-        queryset=Auction.objects.all(), write_only=True
-    )
 
     class Meta:
         model = Bid
-        fields = ['id', 'auction', 'bidder', 'amount', 'created_at']
-        read_only_fields = ['id', 'bidder', 'created_at']
-        validators = [
-            serializers.UniqueTogetherValidator(
-                queryset=Bid.objects.all(),
-                fields=['user', 'auction', 'amount']
-            )
-        ]
+        fields = ['id', 'amount', 'created_at']
+        read_only_fields = ['id', 'created_at']
 
     def validate_amount(self, value):
         auction = self.context['auction']
         user = self.context['request'].user
-        if not auction.is_valid_bid(value, user):
-            raise serializers.ValidationError("Invalid bid")
+
+        if not auction.is_active:
+            raise ValidationError("Auction is not active.")
+
+        if auction.seller == user:
+            raise ValidationError("You cannot bid on your own auction.")
+
+        latest_bid_obj = auction.get_highest_bid()
+
+        if latest_bid_obj is None:
+
+            if value <= auction.starting_price:
+                raise ValidationError(
+                    'Bid must be higher than the starting price.')
+        else:
+
+            if latest_bid_obj.bidder == user:
+                raise ValidationError("You cannot outbid on yourself.")
+
+            if value <= latest_bid_obj.amount:
+                raise ValidationError(
+                    'Bid must be higher than the current highest bid.')
+
+        if auction.end_time < timezone.now():
+            raise ValidationError('Auction has ended.')
+
         return value
 
     def create(self, validated_data):
         user = self.context['request'].user
         auction = self.context['auction']
 
-        validated_data['user'] = user
+        validated_data['bidder'] = user
         validated_data['auction'] = auction
 
         auction.current_bid = validated_data['amount']

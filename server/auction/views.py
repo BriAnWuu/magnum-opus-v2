@@ -56,13 +56,13 @@ class AuctionCreateView(generics.CreateAPIView):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def cancel_auction(request, pk):
+def auction_cancel(request, pk):
     """
     Cancels an auction.
     """
     auction = get_object_or_404(Auction, pk=pk)
     if auction.seller != request.user:
-        return Response({'error': 'You are not the seller of this auction.'}, status=status.HTTP_403_FORBIDDEN)
+        return Response({'error': 'You are not the owner of this auction.'}, status=status.HTTP_403_FORBIDDEN)
     if not auction.can_cancel():
         return Response(
             {'error': 'Auction cannot be canceled.  It either has bids or the end time has passed.'},
@@ -81,9 +81,12 @@ def place_bid(request, pk):
     """
     auction = get_object_or_404(
         Auction,
-        pk=pk,
-        is_active=True
+        pk=pk
     )
+
+    if auction.seller == request.user:
+        return Response({'error': 'You cannot bid on your own auction.'}, status=status.HTTP_403_FORBIDDEN)
+
     serializer = BidSerializer(
         data=request.data,
         context={

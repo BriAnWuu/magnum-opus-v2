@@ -278,7 +278,6 @@ class AuctionCreateViewTests(APITestCase):
         Test successful auction creation with valid data.
         """
         force_authenticate(self.client, user=self.user)
-
         end_time = timezone.now() + timezone.timedelta(days=7)
         data = {
             'title': 'Test Auction',
@@ -302,7 +301,6 @@ class AuctionCreateViewTests(APITestCase):
         Test auction creation with missing title.
         """
         force_authenticate(self.client, user=self.user)
-
         end_time = timezone.now() + timezone.timedelta(days=7)
         data = {
             'description': 'This is a test auction.',
@@ -426,4 +424,208 @@ class AuctionCreateViewTests(APITestCase):
         }
         response = self.client.post(
             self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class AuctionCancelViewTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='testuser', password='testpassword')
+        self.token = Token.objects.create(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token.key}')
+        self.auction = Auction.objects.create(
+            seller=self.user,
+            title='Test Auction',
+            description='This is a test auction.',
+            starting_price=100.00,
+            end_time=timezone.now() + timezone.timedelta(days=7),
+            is_active=True,
+        )
+        self.auction_cancel_url = reverse(
+            'auction_cancel', kwargs={'pk': self.auction.pk})
+
+    def test_cancel_auction_success(self):
+        """
+        Test successful auction cancellation by the seller.
+        """
+        response = self.client.post(self.auction_cancel_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.auction.refresh_from_db()  # Refresh the auction object from the database
+        self.assertFalse(self.auction.is_active)
+
+    def test_cancel_auction_not_seller(self):
+        """
+        Test cancellation attempt by a user who is not the seller.
+        """
+        other_user = User.objects.create_user(
+            username='otheruser', password='otherpassword')
+        other_token = Token.objects.create(user=other_user)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {other_token.key}')
+
+        response = self.client.post(self.auction_cancel_url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.auction.refresh_from_db()
+        self.assertTrue(self.auction.is_active)
+
+    def test_cancel_auction_already_ended(self):
+        """
+        Test cancellation of an auction that has already ended.
+        """
+        self.auction.end_time = timezone.now() - timezone.timedelta(days=1)
+        self.auction.save()
+        response = self.client.post(self.auction_cancel_url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.auction.refresh_from_db()
+        self.assertTrue(self.auction.is_active)
+
+    def test_cancel_auction_invalid_pk(self):
+        """
+        Test cancellation with an invalid auction primary key.
+        """
+        invalid_url = reverse(
+            'auction_cancel', kwargs={'pk': 999})
+        response = self.client.post(invalid_url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_cancel_auction_unauthenticated(self):
+        """
+        Test cancellation without authentication.
+        """
+        self.client.credentials()  # Remove authentication
+        response = self.client.post(self.auction_cancel_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.auction.refresh_from_db()
+        self.assertTrue(self.auction.is_active)
+
+
+class PlaceBidViewTests(APITestCase):
+    def setUp(self):
+        # Create a user (buyer)
+        self.user = User.objects.create_user(
+            username='buyer', password='testpassword')
+        self.token = Token.objects.create(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token.key}')
+
+        # Create a seller
+        self.seller = User.objects.create_user(
+            username='seller', password='sellerpassword')
+        self.seller_token = Token.objects.create(user=self.seller)
+
+        # Create an auction owned by the seller
+        self.auction = Auction.objects.create(
+            seller=self.seller,
+            title='Test Auction',
+            description='This is a test auction.',
+            starting_price=100.00,
+            end_time=timezone.now() + timezone.timedelta(days=7),
+            is_active=True,
+        )
+
+        # Create a bidder
+        self.bidder = User.objects.create_user(
+            username='bidder', password='bidderpassword')
+
+        self.url = reverse(
+            'place_bid', kwargs={'pk': self.auction.pk})
+
+    def test_place_bid_success(self):
+        """
+        Test successful bid placement.
+        """
+        data = {'amount': 120.00}
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Bid.objects.count(), 1)
+        bid = Bid.objects.first()
+        self.assertEqual(bid.bidder, self.user)
+        self.assertEqual(bid.auction, self.auction)
+        self.assertEqual(bid.amount, 120.00)
+        auction = Auction.objects.get(pk=self.auction.pk)
+        self.assertEqual(auction.current_bid, 120.00)
+
+    def test_place_bid_below_starting_price(self):
+        """
+        Test bid below the starting price.
+        """
+        data = {'amount': 90.00}
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('amount', response.data)
+        self.assertEqual(
+            response.data['amount'][0], 'Bid must be higher than the starting price.')
+
+    def test_place_bid_below_current_highest(self):
+        """
+        Test bid below the current highest bid.
+        """
+        # Create a higher bid first
+        Bid.objects.create(
+            bidder=self.bidder,
+            auction=self.auction,
+            amount=150.00
+        )
+        data = {'amount': 140.00}
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('amount', response.data)
+        self.assertEqual(
+            response.data['amount'][0], 'Bid must be higher than the current highest bid.')
+
+    def test_place_bid_outbid_self(self):
+        """
+        Test outbid user's own bid. (prohibit user from bidding consecutively)
+        """
+        # Create bid for the user
+        Bid.objects.create(
+            bidder=self.user,
+            auction=self.auction,
+            amount=150.00
+        )
+        data = {'amount': 160.00}
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('amount', response.data)
+        self.assertEqual(
+            response.data['amount'][0], 'You cannot outbid on yourself.')
+
+    def test_place_bid_by_seller(self):
+        """
+        Test bid placement by the seller of the auction.
+        """
+        # Authenticate as seller
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f'Token {self.seller_token.key}')
+        data = {'amount': 200.00}
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertIn('error', response.data)
+
+    def test_place_bid_on_ended_auction(self):
+        """
+        Test bid on an auction that has already ended.
+        """
+        self.auction.end_time = timezone.now() - timezone.timedelta(days=1)
+        self.auction.save()
+        data = {'amount': 120.00}
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('amount', response.data)
+        self.assertEqual(response.data['amount'][0], 'Auction has ended.')
+
+    def test_place_bid_invalid_auction_pk(self):
+        """
+        Test bid on an invalid auction pk.
+        """
+        invalid_url = reverse('place_bid', kwargs={'pk': 999})
+        data = {'amount': 120.00}
+        response = self.client.post(invalid_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_place_bid_unauthenticated(self):
+        """
+        Test bid without authentication.
+        """
+        self.client.credentials()
+        data = {'amount': 120.00}
+        response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

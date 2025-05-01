@@ -21,22 +21,6 @@ class Auction(models.Model):
     def __str__(self):
         return self.title
 
-    def is_valid_bid(self, amount, user):
-        """
-        Checks if a given bid amount is valid for a user
-        """
-        if self.seller == user:
-            return False
-        if self.current_bid is None:
-            return amount >= self.starting_price
-
-        latest_bid_obj = self.get_highest_bid()
-        if latest_bid_obj:
-            if latest_bid_obj.bidder == user:
-                return False
-            return amount > latest_bid_obj.amount
-        return amount > self.current_bid
-
     def get_highest_bid(self):
         """
         Returns the highest bid for this auction.
