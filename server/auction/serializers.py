@@ -72,21 +72,18 @@ class BidSerializer(serializers.ModelSerializer):
 
 
 class LikeSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
-    auction = serializers.PrimaryKeyRelatedField(
-        queryset=Auction.objects.all(), write_only=True
-    )
 
     class Meta:
         model = Like
-        fields = ['id', 'auction', 'user', 'created_at']
-        read_only_fields = ['id', 'user', 'created_at']
-        validators = [
-            serializers.UniqueTogetherValidator(
-                queryset=Like.objects.all(),
-                fields=['auction', 'user']
-            )
-        ]
+        fields = ['id', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+    def validate(self, data):
+        user = self.context['request'].user
+        auction = self.context['auction']
+        if Like.objects.filter(auction=auction, user=user).exists():
+            raise ValidationError('You have already liked this.')
+        return data
 
     def create(self, validated_data):
         user = self.context['request'].user
