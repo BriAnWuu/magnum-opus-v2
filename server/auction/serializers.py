@@ -20,34 +20,43 @@ class BidSerializer(serializers.ModelSerializer):
 
     def validate_amount(self, value):
         auction = self.context['auction']
-        user = self.context['request'].user
-
-        if not auction.is_active:
-            raise ValidationError("Auction is not active.")
-
-        if auction.seller == user:
-            raise ValidationError("You cannot bid on your own auction.")
-
         latest_bid_obj = auction.get_highest_bid()
 
         if latest_bid_obj is None:
-
             if value <= auction.starting_price:
                 raise ValidationError(
                     'Bid must be higher than the starting price.')
         else:
-
-            if latest_bid_obj.bidder == user:
-                raise ValidationError("You cannot outbid on yourself.")
-
             if value <= latest_bid_obj.amount:
                 raise ValidationError(
                     'Bid must be higher than the current highest bid.')
+        return value
+
+    def validate_auction(self, auction):
+        if not auction.is_active:
+            raise ValidationError('Auction is not active.')
+        return auction
+
+    def validate_bidder(self, auction):
+        user = self.context['request'].user
+        if auction.seller == user:
+            raise ValidationError('You cannot bid on your own auction.')
+
+        # Check if the user is already the highest bidder
+        latest_bid_obj = auction.get_highest_bid()
+        if latest_bid_obj is not None and latest_bid_obj.bidder == user:
+            raise ValidationError('You cannot outbid on yourself.')
+        return auction
+
+    def validate(self, data):
+        auction = self.context['auction']
+        self.validate_auction(auction)
+        self.validate_bidder(auction)
+        self.validate_amount(data['amount'])
 
         if auction.end_time < timezone.now():
             raise ValidationError('Auction has ended.')
-
-        return value
+        return data
 
     def create(self, validated_data):
         user = self.context['request'].user
