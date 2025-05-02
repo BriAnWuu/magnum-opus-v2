@@ -94,17 +94,30 @@ class LikeSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    user = serializers.PrimaryKeyRelatedField(
+        read_only=True, default=serializers.CurrentUserDefault())
     auction = serializers.PrimaryKeyRelatedField(
-        queryset=Auction.objects.all(), write_only=True
-    )
+        queryset=Auction.objects.all(), write_only=True, required=False)
 
     class Meta:
         model = Comment
-        fields = ['id', 'auction', 'user', 'comment_text',
-                  'created_at', 'updated_at', 'is_deleted']
-        read_only_fields = ['id', 'user', 'created_at',
-                            'updated_at', 'is_deleted']
+        fields = '__all__'
+
+    def validate(self, data):
+        if self.partial:
+            return data
+
+        auction_from_context = self.context.get('auction')
+        if not auction_from_context:
+            raise ValidationError('Missing auction from view context')
+
+        data['auction'] = auction_from_context
+        return data
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        validated_data['user'] = user
+        return Comment.objects.create(**validated_data)
 
 
 class AuctionListSerializer(serializers.ModelSerializer):

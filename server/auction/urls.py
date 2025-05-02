@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import AuctionListView, AuctionCreateView, AuctionDetailView, auction_cancel, place_bid, manage_comment, manage_like
+from .views import AuctionListView, AuctionCreateView, AuctionDetailView, auction_cancel, place_bid, ManageCommentView, manage_like
 
 urlpatterns = [
     path('', AuctionListView.as_view(), name='auction_list'),
@@ -9,9 +9,9 @@ urlpatterns = [
 
     path('<int:pk>/bid/', place_bid, name='place_bid'),
 
-    path('<int:pk>/comment/', manage_comment, name='manage_comment'),
-    path('<int:pk>/comment/<int:comment_id>/',
-         manage_comment, name='manage_comment'),
+    path('<int:pk>/comment/', ManageCommentView.as_view(), name='manage_comment'),
+    path('<int:pk>/comment/<uuid:comment_id>/',
+         ManageCommentView.as_view(), name='manage_comment_id'),
 
     path('<int:pk>/like/', manage_like, name='manage_like'),
 ]

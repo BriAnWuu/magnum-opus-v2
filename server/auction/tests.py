@@ -6,6 +6,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase, force_authenticate
 from .models import Auction, Bid, Like, Comment
 from .serializers import AuctionDetailSerializer
+import uuid
 
 
 class AuctionListViewTests(APITestCase):
@@ -786,3 +787,291 @@ class ManageLikeViewTests(APITestCase):
             status.HTTP_405_METHOD_NOT_ALLOWED
         )
         self.assertIn('Method "PUT" not allowed.', response.data['detail'])
+
+
+class ManageCommentViewTests(APITestCase):
+    """
+    Test case specifically for managing comments (DELETE requests).
+    """
+
+    def setUp(self):
+        """
+        Set up data for the tests.  Creates users, auctions, and comments.
+        """
+        # Create users
+        self.user1 = User.objects.create_user(
+            username='user1', password='password1')
+        self.user2 = User.objects.create_user(
+            username='user2', password='password2')
+
+        # Create tokens
+        self.token1 = Token.objects.create(user=self.user1)
+        self.token2 = Token.objects.create(user=self.user2)
+
+        # Create an auction
+        self.auction = Auction.objects.create(
+            seller=self.user1,
+            title='Test Auction 1',
+            description='Description for Test Auction 1',
+            starting_price=10.00,
+            end_time=timezone.now() + timezone.timedelta(days=7),
+        )
+
+        # Create some initial comments
+        self.comment1 = Comment.objects.create(
+            auction=self.auction,
+            user=self.user1,
+            comment_text="This is the first comment."
+        )
+        self.comment2 = Comment.objects.create(
+            auction=self.auction,
+            user=self.user2,
+            comment_text="This is the second comment."
+        )
+
+        # Set up URLs
+        self.base_url = reverse(
+            'manage_comment',
+            kwargs={'pk': self.auction.pk}
+        )
+        self.comment1_url = reverse(
+            'manage_comment_id',
+            kwargs={
+                'pk': self.auction.pk,
+                'comment_id': self.comment1.pk
+            }
+        )
+        self.comment2_url = reverse(
+            'manage_comment_id',
+            kwargs={
+                'pk': self.auction.pk,
+                'comment_id': self.comment2.pk
+            }
+        )
+
+    def test_get_comment_list_all(self):
+        """
+        Test retrieving all comments for an auction.
+        """
+        self.client.credentials()
+        response = self.client.get(self.base_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+
+    def test_get_comment_by_comment_id(self):
+        """
+        Test retrieving comment by id
+        """
+        response = self.client.get(self.comment1_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data['comment_text'], 'This is the first comment.')
+
+    def test_get_comment_invalid_auction_id(self):
+        """
+        Test retrieving comments by invalid auction id 
+        """
+        invalid_url = reverse('manage_comment', kwargs={'pk': 999})
+        response = self.client.get(invalid_url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_get_comment_invalid_comment_id(self):
+        """
+        Test retrieving comment by invalid id 
+        """
+        invalid_url = reverse(
+            'manage_comment_id',
+            kwargs={
+                'pk': 1,
+                'comment_id': uuid.uuid4()
+            }
+        )
+        response = self.client.get(invalid_url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_post_comment_success(self):
+        """
+        Test creating a new comment successfully
+        """
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token1.key}')
+        data = {'comment_text': 'This is a new comment'}
+        response = self.client.post(self.base_url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Comment.objects.count(), 3)
+        new_comment = Comment.objects.latest('created_at')
+        self.assertEqual(new_comment.comment_text, 'This is a new comment')
+        self.assertEqual(new_comment.user, self.user1)
+        self.assertEqual(new_comment.auction, self.auction)
+
+    def test_post_comment_unauthenticated(self):
+        """
+        Test creating new comment without auth
+        """
+        self.client.credentials()
+        data = {'comment_text': 'This is a new comment'}
+        response = self.client.post(self.base_url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(Comment.objects.count(), 2)
+
+    def test_post_comment_invalid_auction_id(self):
+        """
+        Test creating new comment on invalid auction id
+        """
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token1.key}')
+        invalid_url = reverse(
+            'manage_comment',
+            kwargs={'pk': 999}
+        )
+        data = {'comment_text': 'This is a new comment'}
+        response = self.client.post(invalid_url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(Comment.objects.count(), 2)
+
+    def test_post_empty_comment(self):
+        """
+        Test creating new empty comment
+        """
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token1.key}')
+        data = {'comment_text': '  '}
+        response = self.client.post(self.base_url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('comment_text', response.data)
+        self.assertEqual(
+            response.data['comment_text'][0],
+            'This field may not be blank.'
+        )
+
+    def test_put_comment_by_owner(self):
+        """
+        Test updating comment successfully
+        """
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token1.key}')
+        updated_text = 'User 1 tries to update.'
+        response = self.client.put(
+            self.comment1_url,
+            data={'comment_text': updated_text}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        new_comment = Comment.objects.get(pk=self.comment1.pk)
+        self.assertEqual(new_comment.comment_text, updated_text)
+        self.assertEqual(new_comment.user, self.user1)
+        self.assertEqual(new_comment.auction, self.auction)
+
+    def test_put_comment_by_non_owner(self):
+        """
+        Test updating comment by non owner
+        """
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token2.key}')
+        updated_text = 'User 2 tries to update.'
+        response = self.client.put(
+            self.comment1_url,
+            data={'comment_text': updated_text}
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        old_comment = Comment.objects.get(pk=self.comment1.pk)
+        self.assertNotEqual(old_comment.comment_text, updated_text)
+        self.assertEqual(old_comment.user, self.user1)
+        self.assertEqual(old_comment.auction, self.auction)
+
+    def test_put_comment_unauthenticated(self):
+        """
+        Test updating comment without auth
+        """
+        self.client.credentials()
+        updated_text = 'Unauthenticated user tries to update.'
+        response = self.client.put(
+            self.comment1_url,
+            data={'comment_text': updated_text}
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        old_comment = Comment.objects.get(pk=self.comment1.pk)
+        self.assertNotEqual(old_comment.comment_text, updated_text)
+        self.assertEqual(old_comment.user, self.user1)
+        self.assertEqual(old_comment.auction, self.auction)
+
+    def test_put_comment_invalid_auction_id(self):
+        """
+        Test updating comment with invalid auction id
+        """
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token1.key}')
+        updated_text = 'User 1 tries to update.'
+        invalid_url = reverse(
+            'manage_comment',
+            kwargs={'pk': 999}
+        )
+        response = self.client.put(
+            invalid_url,
+            data={'comment_text': updated_text}
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(Comment.objects.count(), 2)
+        old_comment = Comment.objects.get(pk=self.comment1.pk)
+        self.assertNotEqual(old_comment.comment_text, updated_text)
+        self.assertEqual(old_comment.user, self.user1)
+        self.assertEqual(old_comment.auction, self.auction)
+
+    def test_put_comment_invalid_comment_id(self):
+        """
+        Test updating comment with invalid comment id
+        """
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token1.key}')
+        updated_text = 'User 1 tries to update.'
+        invalid_url = reverse(
+            'manage_comment_id',
+            kwargs={'pk': 1, 'comment_id': uuid.uuid4()}
+        )
+        response = self.client.put(
+            invalid_url,
+            data={'comment_text': updated_text}
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(Comment.objects.count(), 2)
+        old_comment = Comment.objects.get(pk=self.comment1.pk)
+        self.assertNotEqual(old_comment.comment_text, updated_text)
+        self.assertEqual(old_comment.user, self.user1)
+        self.assertEqual(old_comment.auction, self.auction)
+
+    def test_delete_comment_by_owner(self):
+        """
+        Test deleting a comment by its owner (user1).
+        """
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token1.key}')
+        response = self.client.delete(self.comment1_url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertTrue(Comment.objects.get(pk=self.comment1.pk).is_deleted)
+        # Check that other comments are still there
+        self.assertEqual(Comment.objects.filter(is_deleted=False).count(), 1)
+
+    def test_delete_comment_by_non_owner(self):
+        """
+        Test deleting a comment by a user who is neither the comment owner nor the auction owner.
+        """
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token2.key}')
+        response = self.client.delete(self.comment1_url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertFalse(Comment.objects.get(pk=self.comment1.pk).is_deleted)
+        self.assertEqual(Comment.objects.count(), 2)
+
+    def test_delete_comment_invalid_auction_id(self):
+        """
+        Test deleting a comment that does not exist.
+        """
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token1.key}')
+        invalid_url = reverse('manage_comment', kwargs={'pk': 999})
+        response = self.client.delete(invalid_url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(Comment.objects.count(), 2)
+
+    def test_delete_comment_invalid_comment_id(self):
+        """
+        Test deleting a comment that does not exist.
+        """
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token1.key}')
+        invalid_url = reverse(
+            'manage_comment_id',
+            kwargs={'pk': 1, 'comment_id': uuid.uuid4()}
+        )
+        response = self.client.delete(invalid_url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(Comment.objects.count(), 2)
