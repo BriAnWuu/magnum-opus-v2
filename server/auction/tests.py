@@ -264,6 +264,11 @@ class AuctionDetailViewTests(APITestCase):
         user_has_liked = serializer.get_user_has_liked(self.auction1)
         self.assertTrue(user_has_liked)
 
+    def test_auction_detail_not_found(self):
+        url = reverse('auction_detail', kwargs={'pk': 999})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
 
 class AuctionCreateViewTests(APITestCase):
     @classmethod
