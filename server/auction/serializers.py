@@ -101,7 +101,8 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = '__all__'
+        fields = ['auction', 'user', 'comment_text',
+                  'created_at', 'updated_at', 'is_deleted']
 
     def validate(self, data):
         if self.partial:

@@ -25,7 +25,10 @@ def login_user(request):
     password = request.data.get('password')
     if username and password:
         user = authenticate(
-            request=request, username=username, password=password)
+            request=request,
+            username=username,
+            password=password
+        )
         if user:
             token, _ = Token.objects.get_or_create(user=user)
             return Response({'token': token.key})
