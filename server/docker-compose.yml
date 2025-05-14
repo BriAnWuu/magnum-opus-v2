@@ -12,6 +12,30 @@ services:
       - ./.env
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER_NM} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    container_name: magnum-opus-redis
+    restart: always
+    volumes:
+      - redis_cache:/data
+    # environment:
+    #   REDIS_PASSWORD: ${}
+    #   REDIS_PORT: ${}
+    #   REDIS_DATABASES: ${}
+    # env_file: -./.env
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   django:
     build: .
@@ -32,6 +56,8 @@ services:
       - ./.env
     depends_on:
       - db
+      - redis
 
 volumes:
   pg_data:
+  redis_cache:
