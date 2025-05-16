@@ -13,19 +13,19 @@ WORKDIR /app
 RUN pip install --upgrade pip
 
 # Copy the entire current directory contents into the container at /app
-COPY requirements.txt .
+COPY requirements.txt /app/
 
 # Install dependencies from the requirements.txt file to ensure our Python environment is ready
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy project files
-COPY . .
+COPY . /app/
 
 # Make entrypoint script executable
 RUN chmod +x entrypoint.sh
 
 # Entrypoint script as the container command
-CMD ["./entrypoint.sh"]
+# CMD ["./entrypoint.sh"]
 
 # For production with Daphne (if using Django Channels)
 # CMD ["daphne", "server.asgi:application", "--bind", "0.0.0.0", "--port", "8000"]

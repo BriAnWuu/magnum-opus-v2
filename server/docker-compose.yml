@@ -50,8 +50,6 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: server.settings
       DATABASE_URL: postgres://${DB_USER_NM}:${DB_USER_PW}@db:${DB_PORT}/${DB_NAME}
-      # If using Django Channels, uncomment and adjust the command:
-      # CMD: daphne your_project_name.asgi:application --bind 0.0.0.0 --port 8000
     env_file:
       - ./.env
     depends_on:
