@@ -1,13 +1,15 @@
 from django.urls import path
-from .views import (
+
+from auction.views.auction import (
     AuctionListView,
     AuctionCreateView,
     AuctionDetailView,
-    ManageCommentView,
     auction_cancel,
-    place_bid,
-    manage_like
 )
+from auction.views.like import manage_like
+from auction.views.bid import place_bid
+from auction.views.comment import ManageCommentView
+
 
 urlpatterns = [
     path('', AuctionListView.as_view(), name='auction_list'),
