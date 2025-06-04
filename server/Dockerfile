@@ -9,6 +9,11 @@ ENV PYTHONBUFFERED=1
 # Set the working directory within the container to /app for any subsequent commands
 WORKDIR /app
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
 # Upgrade pip to ensure we have the latest version for installing dependencies
 RUN pip install --upgrade pip
 
@@ -23,9 +28,4 @@ COPY . /app/
 
 # Make entrypoint script executable
 RUN chmod +x entrypoint.sh
-
-# Entrypoint script as the container command
-# CMD ["./entrypoint.sh"]
-
-# For production with Daphne (if using Django Channels)
-# CMD ["daphne", "server.asgi:application", "--bind", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["./entrypoint.sh"]

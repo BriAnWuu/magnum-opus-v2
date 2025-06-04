@@ -26,13 +26,13 @@ SECRET_KEY = 'django-insecure-i4vs2i)))8kc%p&3v&#=)+$(mg#bv6^t1b&wxl)#pqnnva4n3u
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['0.0.0.0', 'localhost']
+ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0', 'localhost']
 
 
 # Application definition
 
 INSTALLED_APPS = [
-    'daphne'
+    'daphne',
 
     'django.contrib.admin',
     'django.contrib.auth',
@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'channels',
     'rest_framework',
     'rest_framework.authtoken',
 
@@ -156,7 +157,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("magnum-opus-redis", 6379)],
+            "hosts": [("redis", 6379)],
         },
     },
 }
