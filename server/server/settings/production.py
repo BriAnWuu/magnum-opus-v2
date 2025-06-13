@@ -34,6 +34,8 @@ ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'daphne',
+    'auction',
+    'user',
 
     'django.contrib.admin',
     'django.contrib.auth',
@@ -42,12 +44,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'channels',
     'rest_framework',
     'rest_framework.authtoken',
-    'channels',
-
-    'auction',
-    'user',
 ]
 
 MIDDLEWARE = [

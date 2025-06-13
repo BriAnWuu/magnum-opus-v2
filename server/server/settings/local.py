@@ -33,6 +33,8 @@ ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0', 'localhost']
 
 INSTALLED_APPS = [
     'daphne',
+    'auction',
+    'user',
 
     'django.contrib.admin',
     'django.contrib.auth',
@@ -44,9 +46,6 @@ INSTALLED_APPS = [
     'channels',
     'rest_framework',
     'rest_framework.authtoken',
-
-    'auction',
-    'user',
 ]
 
 MIDDLEWARE = [
