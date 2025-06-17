@@ -1,3 +1,11 @@
+import DarkModeToggle from "@/components/DarkModeToggle";
+import ExampleTypography from "@/components/ExampleTypography";
+
 export default function Home() {
-    return <main></main>;
+  return (
+    <main>
+      <ExampleTypography />
+      <DarkModeToggle />
+    </main>
+  );
 }

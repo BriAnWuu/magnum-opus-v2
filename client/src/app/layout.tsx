@@ -1,32 +1,30 @@
+import theme from "@/theme";
+import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
+import InitColorSchemeScript from "@mui/material/InitColorSchemeScript";
+import { ThemeProvider } from "@mui/material/styles";
 import type { Metadata } from "next";
-import { Roboto } from "next/font/google";
-import "./globals.css";
-
-const roboto = Roboto({
-    weight: ["400", "500", "700"],
-    style: ["normal", "italic"],
-    subsets: ["latin"],
-    display: "swap",
-    variable: "--font-roboto",
-    fallback: ["system-ui", "arial"],
-});
 
 export const metadata: Metadata = {
-    title: {
-        template: "%s | Magnum Opus",
-        default: "Magnum Opus",
-    },
-    description: "",
+  title: {
+    template: "%s | Magnum Opus",
+    default: "Magnum Opus",
+  },
+  description: "",
 };
 
 export default function RootLayout({
-    children,
+  children,
 }: Readonly<{
-    children: React.ReactNode;
+  children: React.ReactNode;
 }>) {
-    return (
-        <html lang="en" suppressHydrationWarning>
-            <body>{children}</body>
-        </html>
-    );
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body>
+        <InitColorSchemeScript attribute="class" />
+        <AppRouterCacheProvider>
+          <ThemeProvider theme={theme}>{children}</ThemeProvider>
+        </AppRouterCacheProvider>
+      </body>
+    </html>
+  );
 }
