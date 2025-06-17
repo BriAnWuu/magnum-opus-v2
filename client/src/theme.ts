@@ -1,79 +1,83 @@
 "use client";
 
-import { createTheme } from "@mui/material/styles";
+import { amber, grey, lightGreen, red } from "@mui/material/colors";
+import { createTheme, responsiveFontSizes } from "@mui/material/styles";
+import { Roboto } from "next/font/google";
 
-const theme = createTheme({
-    colorSchemes: {
-        light: {
-            palette: {
-                primary: {
-                    main: "",
-                    light: "",
-                    dark: "",
-                },
-                secondary: {
-                    main: "",
-                    light: "",
-                    dark: "",
-                },
-                error: {
-                    main: "",
-                },
-                warning: { main: "" },
-                info: { main: "" },
-                success: { main: "" },
-            },
-        },
-        dark: {
-            palette: {
-                primary: {
-                    main: "",
-                    light: "",
-                    dark: "",
-                },
-                secondary: {
-                    main: "",
-                    light: "",
-                    dark: "",
-                },
-                error: {
-                    main: "",
-                },
-                warning: { main: "" },
-                info: { main: "" },
-                success: { main: "" },
-            },
-        },
-    },
-    cssVariables: {
-        colorSchemeSelector: "class",
-    },
-    typography: {
-        fontFamily: "var(--font-roboto)",
-        h1: {},
-        h2: {},
-        h3: {},
-        h4: {},
-        h5: {},
-        h6: {},
-        subtitle1: {},
-        subtitle2: {},
-        body1: {},
-        body2: {},
-        button: {},
-        caption: {},
-        overline: {},
-    },
-    breakpoints: {
-        values: {
-            xs: 0,
-            sm: 320,
-            md: 768,
-            lg: 1280,
-            xl: 1440,
-        },
-    },
-    components: {},
+const roboto = Roboto({
+  weight: ["300", "400", "500", "600"],
+  style: ["normal", "italic"],
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-roboto",
+  fallback: ["system-ui", "arial"],
 });
 
-export default theme;
+const theme = createTheme({
+  colorSchemes: {
+    light: {
+      palette: {
+        primary: {
+          main: "#B17457",
+        },
+        secondary: {
+          main: "#D8D2C2",
+        },
+        error: { main: red[500] },
+        warning: { main: amber[300] },
+        info: { main: grey[800] },
+        success: { main: lightGreen["A400"] },
+        background: { default: "#FAF7F0", paper: "#FAF7F0" },
+        text: { primary: "#4A4947" },
+      },
+    },
+    dark: {
+      palette: {
+        primary: {
+          main: "#B17457",
+        },
+        secondary: {
+          main: "#D8D2C2",
+        },
+        error: { main: red[500] },
+        warning: { main: amber[300] },
+        info: { main: grey[800] },
+        success: { main: lightGreen["A400"] },
+        background: { default: "#4A4947", paper: "#4A4947" },
+        text: { primary: "#FAF7F0" },
+      },
+    },
+  },
+  cssVariables: {
+    colorSchemeSelector: "class",
+  },
+  typography: {
+    fontFamily: roboto.style.fontFamily,
+    h1: { fontSize: "4rem", lineHeight: 1.167 },
+    h2: { fontSize: "2.375rem", lineHeight: 1.2 },
+    h3: { fontSize: "2rem", lineHeight: 1.167 },
+    h4: { fontSize: "1.6rem", lineHeight: 1.235 },
+    h5: { fontSize: "1.25rem", lineHeight: 1.334 },
+    h6: { fontSize: "1.125rem", lineHeight: 1.6 },
+    subtitle1: { fontSize: "1rem", lineHeight: 1.75 },
+    subtitle2: { fontSize: "1rem", lineHeight: 1.57 },
+    body1: { fontSize: "0.875rem", lineHeight: 1.5 },
+    body2: { fontSize: "0.875rem", lineHeight: 1.5, fontWeight: 600 },
+    button: { fontSize: "0.75rem", lineHeight: 1.75 },
+    caption: { fontSize: "0.75rem", lineHeight: 1.667 },
+    overline: { fontSize: "0.75rem", lineHeight: 2.667 },
+  },
+  breakpoints: {
+    values: {
+      xs: 0,
+      sm: 320,
+      md: 768,
+      lg: 1280,
+      xl: 1440,
+    },
+  },
+  shape: { borderRadius: 8 },
+  components: {},
+});
+
+export default responsiveFontSizes(theme);
