@@ -4,7 +4,11 @@ import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import { ToggleButton, useColorScheme } from "@mui/material";
 
-export default function DarkModeToggle() {
+interface DarkModeToggleProps {
+  sx: React.CSSProperties;
+}
+
+export default function DarkModeToggle({ sx }: DarkModeToggleProps) {
   const { setMode, mode } = useColorScheme();
 
   const handleToggle = () => {
@@ -33,6 +37,7 @@ export default function DarkModeToggle() {
       onClick={handleToggle}
       title={tooltipText}
       aria-label={tooltipText}
+      sx={sx}
     >
       {icon}
     </ToggleButton>

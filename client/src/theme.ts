@@ -41,7 +41,7 @@ const theme = createTheme({
         },
         error: { main: red[500] },
         warning: { main: amber[300] },
-        info: { main: grey[800] },
+        info: { main: grey[300] },
         success: { main: lightGreen["A400"] },
         background: { default: "#4A4947", paper: "#4A4947" },
         text: { primary: "#FAF7F0" },
@@ -77,7 +77,23 @@ const theme = createTheme({
     },
   },
   shape: { borderRadius: 8 },
-  components: {},
+  components: {
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+        },
+      },
+    },
+    MuiDrawer: {
+      styleOverrides: {
+        paper: {
+          width: 250,
+          boxSizing: "border-box",
+        },
+      },
+    },
+  },
 });
 
 export default responsiveFontSizes(theme);

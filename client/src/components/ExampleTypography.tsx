@@ -7,7 +7,7 @@ export default function ExampleTypography() {
         display: "flex",
         flexDirection: { xs: "column", md: "row" },
         justifyContent: "center",
-        alignItems: "center",
+        alignItems: "start",
         gap: 1,
         padding: 1,
       }}
@@ -32,11 +32,14 @@ export default function ExampleTypography() {
         Enjoy the flexibility and customization options that Material UI
         provides.
       </Typography>
-      <Typography variant="body2" color="warning">
+      <Typography variant="caption" color="warning">
         Don't forget to check the documentation for more details.
       </Typography>
-      <Typography variant="body2" color="error">
+      <Typography variant="overline" color="error">
         If you encounter any issues, please reach out for support.
+      </Typography>
+      <Typography variant="button" color="text.primary">
+        Button
       </Typography>
     </Box>
   );
