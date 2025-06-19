@@ -70,10 +70,10 @@ const theme = createTheme({
   breakpoints: {
     values: {
       xs: 0,
-      sm: 320,
+      sm: 600,
       md: 768,
-      lg: 1280,
-      xl: 1440,
+      lg: 1024,
+      xl: 1280,
     },
   },
   shape: { borderRadius: 8 },
@@ -88,7 +88,7 @@ const theme = createTheme({
     MuiDrawer: {
       styleOverrides: {
         paper: {
-          width: 280,
+          width: 250,
           boxSizing: "border-box",
         },
       },

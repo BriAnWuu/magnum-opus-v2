@@ -6,10 +6,11 @@ export default function ExampleTypography() {
       sx={{
         display: "flex",
         flexDirection: { xs: "column", lg: "row" },
-        justifyContent: "center",
-        alignItems: "start",
+        justifyContent: "flex-start",
+        alignItems: "flex-start",
         gap: 1,
         padding: 1,
+        overflowX: "scroll",
       }}
     >
       <Typography variant="h1" color="primary">

@@ -77,7 +77,7 @@ export default function DrawerNav() {
   );
 
   return (
-    <Box sx={{ flexShrink: { xs: 0 } }} aria-label="navigation">
+    <Box component="nav" sx={{ flexShrink: { xs: 0 } }} aria-label="navigation">
       {/* mobile view */}
       <IconButton
         sx={{ display: { xs: "flex", lg: "none" } }}

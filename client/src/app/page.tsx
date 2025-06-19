@@ -1,6 +1,8 @@
 "use client";
 
+import AuctionList from "@/components/auction/AuctionList";
 import ExampleTypography from "@/components/ExampleTypography";
+import Hero from "@/components/hero/Hero";
 import { useTheme } from "@mui/material";
 import Box from "@mui/material/Box";
 
@@ -8,7 +10,7 @@ export default function Home() {
   const theme = useTheme();
   const drawerWidth =
     (theme.components?.MuiDrawer?.styleOverrides?.paper as { width?: number })
-      ?.width || 280;
+      ?.width || 250;
 
   return (
     <Box
@@ -25,6 +27,8 @@ export default function Home() {
         },
       }}
     >
+      <Hero />
+      <AuctionList />
       <ExampleTypography />
     </Box>
   );
