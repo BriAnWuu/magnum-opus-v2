@@ -8,7 +8,7 @@ export default function Home() {
   const theme = useTheme();
   const drawerWidth =
     (theme.components?.MuiDrawer?.styleOverrides?.paper as { width?: number })
-      ?.width || 250;
+      ?.width || 280;
 
   return (
     <Box
@@ -16,8 +16,12 @@ export default function Home() {
       sx={{
         flexGrow: 1,
         width: {
-          xs: "50%",
+          xs: "100%",
           lg: `calc(100% - ${drawerWidth}px)`,
+        },
+        marginLeft: {
+          xs: 0,
+          lg: `${drawerWidth}px`,
         },
       }}
     >

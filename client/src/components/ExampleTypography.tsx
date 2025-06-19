@@ -5,7 +5,7 @@ export default function ExampleTypography() {
     <Box
       sx={{
         display: "flex",
-        flexDirection: { xs: "column", md: "row" },
+        flexDirection: { xs: "column", lg: "row" },
         justifyContent: "center",
         alignItems: "start",
         gap: 1,

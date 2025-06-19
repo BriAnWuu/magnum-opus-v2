@@ -88,7 +88,7 @@ const theme = createTheme({
     MuiDrawer: {
       styleOverrides: {
         paper: {
-          width: 250,
+          width: 280,
           boxSizing: "border-box",
         },
       },
