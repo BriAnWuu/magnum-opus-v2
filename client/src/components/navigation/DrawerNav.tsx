@@ -1,6 +1,6 @@
 "use client";
 
-import DarkModeToggle from "@/components/DarkModeToggle";
+import DarkModeToggle from "@/components/navigation/DarkModeToggle";
 import FilterVintageIcon from "@mui/icons-material/FilterVintage";
 import MenuIcon from "@mui/icons-material/Menu";
 import {
