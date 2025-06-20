@@ -27,7 +27,7 @@ const theme = createTheme({
         warning: { main: amber[300] },
         info: { main: grey[800] },
         success: { main: lightGreen["A400"] },
-        background: { default: "#FAF7F0", paper: "#FAF7F0" },
+        background: { default: "#FAF7F0", paper: "#F4EDDD" },
         text: { primary: "#4A4947" },
       },
     },
@@ -43,7 +43,7 @@ const theme = createTheme({
         warning: { main: amber[300] },
         info: { main: grey[300] },
         success: { main: lightGreen["A400"] },
-        background: { default: "#4A4947", paper: "#4A4947" },
+        background: { default: "#4A4947", paper: "#5C5B59" },
         text: { primary: "#FAF7F0" },
       },
     },
@@ -90,6 +90,17 @@ const theme = createTheme({
         paper: {
           width: 250,
           boxSizing: "border-box",
+          borderRadius: 0,
+          borderStartEndRadius: 8,
+          borderEndEndRadius: 8,
+        },
+      },
+    },
+    MuiImageListItem: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+          overflow: "hidden",
         },
       },
     },

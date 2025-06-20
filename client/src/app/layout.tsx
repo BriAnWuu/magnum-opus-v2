@@ -23,11 +23,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <CssBaseline />
         <InitColorSchemeScript attribute="class" />
         <AppRouterCacheProvider>
           <ThemeProvider theme={theme}>
-            <Box sx={{ display: "flex" }}>
+            <CssBaseline />
+            <Box
+              sx={{
+                display: "flex",
+              }}
+            >
               <DrawerNav />
               {children}
             </Box>
