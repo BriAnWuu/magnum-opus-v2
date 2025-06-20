@@ -2,7 +2,6 @@ import DrawerNav from "@/components/navigation/DrawerNav";
 import theme from "@/theme";
 import { CssBaseline } from "@mui/material";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
-import Box from "@mui/material/Box";
 import InitColorSchemeScript from "@mui/material/InitColorSchemeScript";
 import { ThemeProvider } from "@mui/material/styles";
 import type { Metadata } from "next";
@@ -27,14 +26,8 @@ export default function RootLayout({
         <AppRouterCacheProvider>
           <ThemeProvider theme={theme}>
             <CssBaseline />
-            <Box
-              sx={{
-                display: "flex",
-              }}
-            >
-              <DrawerNav />
-              {children}
-            </Box>
+            <DrawerNav />
+            {children}
           </ThemeProvider>
         </AppRouterCacheProvider>
       </body>

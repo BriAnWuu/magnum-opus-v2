@@ -4,6 +4,7 @@ import DarkModeToggle from "@/components/navigation/DarkModeToggle";
 import FilterVintageIcon from "@mui/icons-material/FilterVintage";
 import MenuIcon from "@mui/icons-material/Menu";
 import {
+  alpha,
   Box,
   Divider,
   Drawer,
@@ -80,7 +81,14 @@ export default function DrawerNav() {
     <Box component="nav" sx={{ flexShrink: { xs: 0 } }} aria-label="navigation">
       {/* mobile view */}
       <IconButton
-        sx={{ display: { xs: "flex", lg: "none" } }}
+        sx={{
+          position: "fixed",
+          top: 8,
+          left: 8,
+          backgroundColor: alpha("#FFF", 0.25),
+          zIndex: 999,
+          display: { xs: "flex", lg: "none" },
+        }}
         onClick={() => toggleDrawer(true)}
       >
         <MenuIcon />

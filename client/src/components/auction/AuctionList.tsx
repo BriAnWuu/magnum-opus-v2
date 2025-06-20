@@ -21,7 +21,7 @@ export default function AuctionList() {
       sx={{
         display: "flex",
         justifyContent: "center",
-        paddingX: 4,
+        paddingX: { xs: 2, lg: 4 },
       }}
     >
       <ImageList
