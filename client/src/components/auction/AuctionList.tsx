@@ -1,6 +1,7 @@
 "use client";
 
-import { Box, useMediaQuery, useTheme } from "@mui/material";
+import Section from "@/components/Section";
+import { useMediaQuery, useTheme } from "@mui/material";
 import ImageList from "@mui/material/ImageList";
 import ImageListItem from "@mui/material/ImageListItem";
 
@@ -16,14 +17,7 @@ export default function AuctionList() {
   const columns = isXl ? 6 : isLg ? 4 : isMd ? 4 : 2;
 
   return (
-    <Box
-      component="section"
-      sx={{
-        display: "flex",
-        justifyContent: "center",
-        paddingX: { xs: 2, lg: 4 },
-      }}
-    >
+    <Section>
       <ImageList
         sx={{
           position: "relative",
@@ -56,7 +50,7 @@ export default function AuctionList() {
           </ImageListItem>
         ))}
       </ImageList>
-    </Box>
+    </Section>
   );
 }
 
