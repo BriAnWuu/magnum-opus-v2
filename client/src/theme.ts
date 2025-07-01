@@ -101,6 +101,7 @@ const theme = createTheme({
         root: {
           borderRadius: 8,
           overflow: "hidden",
+          cursor: "pointer",
         },
       },
     },

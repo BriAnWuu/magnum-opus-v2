@@ -1,9 +1,8 @@
 "use client";
 
 import Section from "@/components/Section";
-import { useMediaQuery, useTheme } from "@mui/material";
-import ImageList from "@mui/material/ImageList";
-import ImageListItem from "@mui/material/ImageListItem";
+import AuctionListItem from "@/components/auction/AuctionListItem";
+import { ImageList, useMediaQuery, useTheme } from "@mui/material";
 
 export default function AuctionList() {
   const theme = useTheme();
@@ -30,40 +29,14 @@ export default function AuctionList() {
         rowHeight={imageSize}
       >
         {itemData.map((item: ItemData) => (
-          <ImageListItem
-            key={item.img}
-            // cols={item.cols || 1}
-            // rows={item.rows || 1}
-            cols={item.trending ? 2 : 1}
-            rows={item.featured ? 2 : 1}
-          >
-            <img
-              {...srcset(
-                item.img,
-                imageSize,
-                item.trending ? 2 : 1,
-                item.featured ? 2 : 1
-              )}
-              alt={item.title}
-              loading="lazy"
-            />
-          </ImageListItem>
+          <AuctionListItem key={item.img} {...item} imageSize={imageSize} />
         ))}
       </ImageList>
     </Section>
   );
 }
 
-const srcset = (image: string, size: number, cols = 1, rows = 1) => {
-  return {
-    src: `${image}?w=${size * cols}&h=${size * rows}&fit=crop&auto=format`,
-    srcSet: `${image}?w=${size * cols}&h=${
-      size * rows
-    }&fit=crop&auto=format&dpr=2 2x`,
-  };
-};
-
-interface ItemData {
+export interface ItemData {
   img: string;
   title: string;
   trending: boolean; // High click-through rate
